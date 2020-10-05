@@ -1,0 +1,86 @@
+name: $(GITVERSION_FullSemVer)
+
+trigger:
+  branches:
+    exclude:
+    - '*'
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+
+stages:
+  - stage: Build
+    jobs:
+    - job: BuildApplication
+      displayName: Build Application
+      workspace:
+        clean: all
+      steps:
+        - task: gitversion/setup@0
+          inputs:
+            versionSpec: '5.x'
+
+        - task: gitversion/execute@0
+          inputs:
+            useConfigFile: true
+            configFilePath: 'GitVersion.yml'
+
+        - task: NuGetToolInstaller@1
+
+        - task: NuGetCommand@2
+          displayName: 'Nuget restore'
+          inputs:
+            command: 'restore'
+            restoreSolution: 'src/Moriyama.ConfigBuilder.sln'
+            feedsToUse: 'select'
+            vstsFeed: '/935ad82b-f61d-4722-96e8-623201708a2b'
+
+        - task: VSBuild@1
+          inputs:
+            solution: 'src/Moriyama.ConfigBuilder.sln'
+            msbuildArgs: '/p:DeployOnBuild=true /p:PreBuildEvent="" /p:AutoParameterizationWebConfigConnectionStrings=false /p:PostBuildEvent="" /p:MarkWebConfigAssistFilesAsExclude=false /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactStagingDirectory)"'
+            platform: '$(buildPlatform)'
+            configuration: '$(buildConfiguration)'
+
+        - task: VSTest@2
+          inputs:
+            platform: '$(buildPlatform)'
+            configuration: '$(buildConfiguration)'
+
+        - task: NuGetCommand@2
+          inputs:
+            command: 'pack'
+            packagesToPack: 'src/Moriyama.ConfigBuilder.csproj'
+            versioningScheme: 'byBuildNumber'
+
+        - task: PublishBuildArtifacts@1
+          inputs:
+            PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+            ArtifactName: 'drop'
+            publishLocation: 'Container'          
+  - stage: Release
+    jobs:
+    - deployment: Publish
+      displayName: Publish to Nuget
+      environment: Artifacts
+      strategy: 
+        runOnce:
+          deploy:
+            steps:
+              - checkout: none
+              - task: DownloadBuildArtifacts@0
+                displayName: 'Download Build Artifacts'
+                inputs:
+                  artifactName: 'drop'
+                  downloadPath: $(System.DefaultWorkingDirectory)
+              - task: NuGetCommand@2
+                displayName: 'NuGet push'
+                inputs:
+                  command: push
+                  packagesToPush: '$(System.DefaultWorkingDirectory)/drop/*.nupkg'
+                  publishVstsFeed: '935ad82b-f61d-4722-96e8-623201708a2b'
