@@ -1,12 +1,12 @@
 # Moriyama Config Builder
 
-A Configuration builders for ASP.NET that uses a web deploy formatted parameters.xml file to define parameters and a secrets file to store values.
+A Configuration builder for ASP.NET that uses a WebDeploy formatted **parameters.xml** file to define parameters and a secrets file to store values.
 
 ## About Configuration Builders
 
 See https://docs.microsoft.com/en-us/aspnet/config-builder
 
-ASP.NET (4.7) allows you to write code to construct application configuration dynamically at runtime rather than storing values in web.config or other configuration files.
+ASP.NET (4.7) allows you to write code to construct application configuration dynamically at runtime rather than storing values in Web.Config or other configuration files.
 
 This can be particularly useful when managing secret configuration that you do not want to commit to version control.
 
@@ -22,7 +22,7 @@ You can add the following Nuget package to your .NET Framework project
 
 The project uses the same Parameters.xml format as WebDeploy - see https://docs.microsoft.com/en-us/aspnet/web-forms/overview/deployment/web-deployment-in-the-enterprise/configuring-parameters-for-web-package-deployment
 
-Create a file named Parameters.xml at the root of your project:
+Create a file named **Parameters.xml** at the root of your project:
 
 ```
 <parameters>
@@ -52,7 +52,7 @@ Create a file named Parameters.xml at the root of your project:
 
 The example above is defining a connection string and an appsetting in Web.Config but you can target any configuration file in your application.
 
-Next create a file containing your secret values in the webroot of your project called SetParameters.environment.secret.config (note environment could be swapped with dev/staging/prod etc).
+Next create a file containing your secret values in the web root of your project called **SetParameters.environment.secret.config** (note environment could be swapped with dev/staging/prod etc).
 
 The SetParametrs file is key value:
 
@@ -107,15 +107,15 @@ Finally for any configuration element that you want to use the config builder ad
 
 ## Securing your secrets
 
-Obviously the single file that contains all of your secrets contains very sensitive information about your project!
+The single file that contains all of your secrets contains very sensitive information about your project!
 
-You should start by adding *.secret.config to your .gitignore file to make sure it isn't accidentally commited.
+You should start by adding *.secret.config to your .gitignore file to make sure it isn't accidentally committed.
 
 ## Sharing secrets
 
 Your secrets file can be shared between members of your team. At Moriyama we have a method of pushing and pulling the secrets files to secure storage - which is secured by the oragnisational account of the developer.
 
-Doing this means, that you can programatically access project configuration with some sort of devops code - and programatically rotate secrets (such as connection strings) to increase secuirty
+Doing this means, that you can programmatically  access project configuration with some sort of devops code - and programmatically rotate secrets (such as connection strings) to increase security.
 
 ## I need help!
 
