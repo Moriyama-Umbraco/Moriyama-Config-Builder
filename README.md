@@ -50,11 +50,11 @@ Create a file named **Parameters.xml** at the root of your project:
 </parameters>
 ```
 
-The example above is defining a connection string and an appsetting in Web.Config but you can target any configuration file in your application.
+The example above is defining a connection string and an appsetting in Web.Config but you can target any configuration file in your application. Ensure you pay attention to the name attribute as we will be needing these for the next step.
 
-Next create a file containing your secret values in the web root of your project called **SetParameters.environment.secret.config** (note environment could be swapped with dev/staging/prod etc).
+Next create a file containing your secret values in the web root of your project called **SetParameters.environment.secret.config** (Note: environment could be swapped with dev/staging/prod etc).
 
-The SetParametrs file is key value:
+The SetParametrs file is a key value store:
 
 ```
 <parameters>
@@ -66,10 +66,11 @@ The SetParametrs file is key value:
     value="True" />
 </parameters>
 ```
+Notice how we refer back to the name we created in the parameters.xml file.
 
 ## Setting up config builder in your project
 
-Add the following to the configSections element of your Web.Config
+Add the following `<section>` element to your `<configSections>` element of your Web.Config
 
 ```
 <section name="configBuilders" 
@@ -77,14 +78,14 @@ Add the following to the configSections element of your Web.Config
     restartOnExternalChanges="false" requirePermission="false" />
 ```
 
-Next add the following below the root element of your Web.Config file:
+Next add the following below the root element `<configuration>` of your Web.Config file:
 
 ```
 <configBuilders>
     <builders>
       <add name="Moriyama"
      type="Moriyama.ConfigBuilder.MoriyamaConfigBuilder, Moriyama.ConfigBuilder" 
-           enabled="true" environment="preview" mode="paramsFile"/>
+           enabled="true" environment="dev" mode="paramsFile"/>
     </builders>
   </configBuilders>
 ```
@@ -92,17 +93,38 @@ Next add the following below the root element of your Web.Config file:
 
 The environment attribute parameter will allow you to switch between parameter files for environments e.g.
 
-- preview - SetParameters.preview.secret.config
-- myenv - SetParameters.myenv.secret.config
+- dev - SetParameters.dev.secret.config
+- staging - SetParameters.staging.secret.config
 
-Finally for any configuration element that you want to use the config builder add the configBuidlers attribute e.g:
+Use Config Transforms to change this value when deploying to other environments. The transform below changes the environment value:
 
 ```
-<appSettings configBuilders="Moriyama">
-    ....
+<configBuilders>
+    <builders>
+      <add name="Moriyama" environment="production" xdt:Transform="SetAttributes" xdt:Locator="Match(name)"/>
+    </builders>
+  </configBuilders>
+```
+Elmah.io has very good guide on this: [https://blog.elmah.io/web-config-transformations-the-definitive-syntax-guide/](https://blog.elmah.io/web-config-transformations-the-definitive-syntax-guide/)
 
-<smtp from="" configBuilders="Moriyama">
-    ....
+Finally for any configuration element that you want to use the config builder attribute. Add the configBuidlers attribute to the container/parent element e.g:
+
+```
+<connectionStrings configBuilders="Moriyama">
+    <remove name="umbracoDbDSN"/>
+    <add name="umbracoDbDSN" connectionString="" providerName="System.Data.SqlClient"/>
+</connectionStrings>
+  
+<appSettings configBuilders="Moriyama">
+    <add key="RecaptchaPublicKey" value="" />
+    <add key="RecaptchaPrivateKey" value="" />
+    .... etc
+
+<mailSettings>
+      <smtp from="" configBuilders="Moriyama">
+        <network host="" password="" userName="" port="" />
+      </smtp>
+</mailSettings>
 ```
 
 ## Securing your secrets
